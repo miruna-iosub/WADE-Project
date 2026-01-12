@@ -11,6 +11,7 @@ An interactive web-based visualization tool for analyzing the Pennsylvania road 
 - [Overview](#overview)
 - [Features](#features)
 - [Architecture](#architecture)
+- [API Documentation](#api-documentation)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -101,7 +102,135 @@ This project transforms the Stanford SNAP Pennsylvania road network dataset into
 
 ---
 
-## 📦 Prerequisites
+## � API Documentation
+
+This project provides a comprehensive **REST API** with an **OpenAPI 3.0 specification** for querying and analyzing the Pennsylvania road network data.
+
+### API Resources
+
+| Resource | Description |
+|----------|-------------|
+| **[api-spec.yaml](api-spec.yaml)** | Complete OpenAPI 3.0 specification with all endpoints, schemas, and examples |
+| **[API-USAGE-EXAMPLES.md](API-USAGE-EXAMPLES.md)** | Comprehensive usage guide with 12 detailed examples and 4 case studies |
+| **[API-QUICK-REFERENCE.md](API-QUICK-REFERENCE.md)** | Quick reference guide for common operations and SPARQL queries |
+| **[postman-collection.json](postman-collection.json)** | Postman collection for testing all API endpoints |
+
+### Quick Start
+
+#### View API Documentation
+```bash
+# Using Swagger UI (recommended)
+npx @redocly/cli preview-docs api-spec.yaml
+
+# Or use any OpenAPI viewer
+# https://editor.swagger.io/ - Paste api-spec.yaml content
+```
+
+#### Test API Endpoints
+```bash
+# Get network statistics
+curl http://localhost:3000/api/v1/statistics/network
+
+# Get top 10 most connected nodes
+curl "http://localhost:3000/api/v1/nodes?limit=10"
+
+# Find major hubs (degree 6-10)
+curl "http://localhost:3000/api/v1/nodes/by-degree?minDegree=6&maxDegree=10"
+```
+
+### API Endpoints Overview
+
+#### Nodes
+- `GET /nodes` - List all nodes with pagination
+- `GET /nodes/by-degree` - Filter nodes by degree range
+- `GET /nodes/{nodeId}` - Get specific node details
+- `GET /nodes/{nodeId}/subgraph` - Get subgraph around a node
+
+#### Statistics
+- `GET /statistics/network` - Overall network statistics
+- `GET /statistics/degree-distribution` - Node degree distribution
+
+#### Classifications
+- `GET /classifications` - Classification distribution stats
+- `GET /classifications/concepts` - SKOS concept hierarchy
+- `GET /classifications/dead-ends` - List dead end nodes
+- `GET /classifications/hubs` - List major hub nodes
+
+#### SPARQL
+- `POST /sparql/query` - Execute custom SPARQL queries
+
+### Real-World Case Studies
+
+The API documentation includes 4 detailed case studies:
+
+1. **Traffic Management System** - Identify critical intersections for monitoring
+2. **Road Maintenance Optimization** - Allocate resources based on connectivity
+3. **Emergency Response Planning** - Find optimal locations for response stations
+4. **Network Visualization Dashboard** - Build interactive React + D3.js app
+
+### Import into Postman
+
+1. Open Postman
+2. Click **Import** → **File**
+3. Select `postman-collection.json`
+4. Update environment variables:
+   - `baseUrl`: `http://localhost:3000/api/v1`
+   - `sparqlEndpoint`: `http://localhost:3030/roadnet/sparql`
+
+### Example: Get Node Subgraph (JavaScript)
+
+```javascript
+async function getNodeSubgraph(nodeId, depth = 2) {
+  const response = await fetch(
+    `http://localhost:3000/api/v1/nodes/${nodeId}/subgraph?depth=${depth}`
+  );
+  const data = await response.json();
+  
+  console.log(`Center node: ${data.centerNode.nodeId}`);
+  console.log(`Connected nodes: ${data.meta.nodeCount}`);
+  console.log(`Edges: ${data.meta.edgeCount}`);
+  
+  return data;
+}
+
+// Usage
+const subgraph = await getNodeSubgraph('0', 2);
+```
+
+### Example: Custom SPARQL Query (Python)
+
+```python
+import requests
+
+query = """
+PREFIX roadonto: <http://example.org/roadnet/ontology#>
+
+SELECT ?nodeId ?degree
+WHERE {
+  ?node roadonto:hasNodeId ?nodeId ;
+        roadonto:hasDegree ?degree .
+  FILTER(?degree > 10)
+}
+ORDER BY DESC(?degree)
+LIMIT 10
+"""
+
+response = requests.post(
+    'http://localhost:3000/api/v1/sparql/query',
+    json={'query': query, 'format': 'json'}
+)
+
+results = response.json()
+for binding in results['results']['bindings']:
+    print(f"Node: {binding['nodeId']['value']}, "
+          f"Degree: {binding['degree']['value']}")
+```
+
+For complete documentation, see **[API-USAGE-EXAMPLES.md](API-USAGE-EXAMPLES.md)**.
+
+---
+
+## �📦 Prerequisites
 
 ### Required Software
 - **Python 3.8+** (for data conversion)

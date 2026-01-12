@@ -1,0 +1,1141 @@
+openapi: 3.0.3
+info:
+  title: Pennsylvania Road Network API
+  description: |
+    A RESTful API for querying and analyzing the Pennsylvania road network using SPARQL and semantic web technologies.
+    
+    This API provides access to a knowledge base of 1,088,092 road nodes and 3,083,796 road edges, 
+    represented as RDF/OWL ontologies with SKOS concept classifications.
+    
+    ## Features
+    - Query road network nodes by connectivity degree
+    - Find major hubs, dead ends, and intersections
+    - Extract subgraphs around specific nodes
+    - Retrieve network statistics and degree distributions
+    - Access SKOS concept hierarchies for road classifications
+    
+    ## Data Model
+    The API uses the following ontology:
+    - **Namespace**: `http://example.org/roadnet/`
+    - **Node Classifications** (SKOS):
+      - Dead End (degree = 1)
+      - Simple Junction (degree 2-3)
+      - Intersection (degree 4-5)
+      - Major Hub (degree 6-9)
+      - Super Hub (degree ≥ 10)
+    
+    ## Authentication
+    Currently, the API does not require authentication. This may change in production deployments.
+    
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@roadnet.example.org
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local development server
+  - url: http://localhost:3030/roadnet
+    description: Apache Jena Fuseki SPARQL endpoint
+  - url: https://api.roadnet.example.org/v1
+    description: Production server
+
+tags:
+  - name: Nodes
+    description: Operations on road network nodes (intersections/endpoints)
+  - name: Edges
+    description: Operations on road network edges (connections)
+  - name: Statistics
+    description: Network statistics and analytics
+  - name: Classifications
+    description: SKOS concept classifications and hierarchies
+  - name: SPARQL
+    description: Direct SPARQL query execution
+
+paths:
+  /nodes:
+    get:
+      tags:
+        - Nodes
+      summary: Get road network nodes
+      description: |
+        Retrieves a paginated list of road nodes with their connectivity information.
+        Nodes are ordered by degree (connectivity) in descending order by default.
+      operationId: getNodes
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of nodes to return
+          required: false
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 1000
+        - name: offset
+          in: query
+          description: Number of nodes to skip (for pagination)
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: orderBy
+          in: query
+          description: Field to order results by
+          required: false
+          schema:
+            type: string
+            enum: [degree, inDegree, outDegree, nodeId]
+            default: degree
+        - name: order
+          in: query
+          description: Sort order
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Node'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        example: 1088092
+              examples:
+                defaultResponse:
+                  summary: Top 3 most connected nodes
+                  value:
+                    data:
+                      - nodeId: "0"
+                        degree: 18
+                        inDegree: 9
+                        outDegree: 9
+                        classification: "Super Hub"
+                      - nodeId: "42156"
+                        degree: 15
+                        inDegree: 7
+                        outDegree: 8
+                        classification: "Super Hub"
+                      - nodeId: "98234"
+                        degree: 12
+                        inDegree: 6
+                        outDegree: 6
+                        classification: "Super Hub"
+                    pagination:
+                      limit: 100
+                      offset: 0
+                      hasMore: true
+                    meta:
+                      total: 1088092
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /nodes/by-degree:
+    get:
+      tags:
+        - Nodes
+      summary: Get nodes filtered by degree range
+      description: |
+        Retrieves nodes that fall within a specific connectivity degree range.
+        Useful for finding specific types of intersections or analyzing network topology.
+      operationId: getNodesByDegree
+      parameters:
+        - name: minDegree
+          in: query
+          description: Minimum connectivity degree (inclusive)
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            example: 6
+        - name: maxDegree
+          in: query
+          description: Maximum connectivity degree (inclusive)
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            example: 10
+        - name: limit
+          in: query
+          description: Maximum number of results
+          required: false
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 1000
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Node'
+                  meta:
+                    type: object
+                    properties:
+                      count:
+                        type: integer
+                      filters:
+                        type: object
+                        properties:
+                          minDegree:
+                            type: integer
+                          maxDegree:
+                            type: integer
+              examples:
+                majorHubs:
+                  summary: Find major hubs (degree 6-10)
+                  value:
+                    data:
+                      - nodeId: "12345"
+                        degree: 9
+                        classification: "Major Hub"
+                      - nodeId: "67890"
+                        degree: 8
+                        classification: "Major Hub"
+                      - nodeId: "24680"
+                        degree: 7
+                        classification: "Major Hub"
+                    meta:
+                      count: 3
+                      filters:
+                        minDegree: 6
+                        maxDegree: 10
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /nodes/{nodeId}:
+    get:
+      tags:
+        - Nodes
+      summary: Get a specific node by ID
+      description: Retrieves detailed information about a single road node
+      operationId: getNodeById
+      parameters:
+        - name: nodeId
+          in: path
+          description: The unique identifier of the node
+          required: true
+          schema:
+            type: string
+            example: "0"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeDetailed'
+              examples:
+                superHub:
+                  summary: Super hub node details
+                  value:
+                    nodeId: "0"
+                    degree: 18
+                    inDegree: 9
+                    outDegree: 9
+                    classification:
+                      label: "Super Hub"
+                      definition: "Critical intersection with 10 or more connections"
+                      scheme: "Road Network Concept Scheme"
+                    connectedNodes: ["1", "6309", "6353", "12450", "15678"]
+                    uri: "http://example.org/roadnet/pa#node_0"
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /nodes/{nodeId}/subgraph:
+    get:
+      tags:
+        - Nodes
+      summary: Get subgraph around a node
+      description: |
+        Retrieves all nodes and edges within a specified depth from the given node.
+        Useful for visualizing local network structure.
+      operationId: getNodeSubgraph
+      parameters:
+        - name: nodeId
+          in: path
+          description: The central node ID
+          required: true
+          schema:
+            type: string
+            example: "0"
+        - name: depth
+          in: query
+          description: Number of hops from the central node
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+            maximum: 3
+        - name: limit
+          in: query
+          description: Maximum number of edges to return
+          required: false
+          schema:
+            type: integer
+            default: 500
+            maximum: 2000
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  centerNode:
+                    $ref: '#/components/schemas/Node'
+                  nodes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Node'
+                  edges:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Edge'
+                  meta:
+                    type: object
+                    properties:
+                      depth:
+                        type: integer
+                      nodeCount:
+                        type: integer
+                      edgeCount:
+                        type: integer
+              examples:
+                depth1Subgraph:
+                  summary: Immediate neighbors (depth 1)
+                  value:
+                    centerNode:
+                      nodeId: "0"
+                      degree: 18
+                    nodes:
+                      - nodeId: "1"
+                        degree: 4
+                      - nodeId: "6309"
+                        degree: 3
+                      - nodeId: "6353"
+                        degree: 5
+                    edges:
+                      - fromId: "0"
+                        toId: "1"
+                        fromDegree: 18
+                        toDegree: 4
+                      - fromId: "0"
+                        toId: "6309"
+                        fromDegree: 18
+                        toDegree: 3
+                    meta:
+                      depth: 1
+                      nodeCount: 18
+                      edgeCount: 18
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /edges:
+    get:
+      tags:
+        - Edges
+      summary: Get road network edges
+      description: |
+        Retrieves a paginated list of road edges (connections between nodes).
+        Can optionally filter by source node IDs.
+      operationId: getEdges
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of edges to return
+          required: false
+          schema:
+            type: integer
+            default: 1000
+            minimum: 1
+            maximum: 5000
+        - name: offset
+          in: query
+          description: Number of edges to skip
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: nodeIds
+          in: query
+          description: Filter edges by source node IDs (comma-separated)
+          required: false
+          schema:
+            type: string
+            example: "0,1,42156"
+          style: form
+          explode: false
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Edge'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+              examples:
+                edgeList:
+                  summary: Sample edges
+                  value:
+                    data:
+                      - fromId: "0"
+                        toId: "1"
+                        fromDegree: 18
+                        toDegree: 4
+                      - fromId: "0"
+                        toId: "6309"
+                        fromDegree: 18
+                        toDegree: 3
+                      - fromId: "1"
+                        toId: "2"
+                        fromDegree: 4
+                        toDegree: 3
+                    pagination:
+                      limit: 1000
+                      offset: 0
+                      hasMore: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /statistics/network:
+    get:
+      tags:
+        - Statistics
+      summary: Get overall network statistics
+      description: Retrieves aggregate statistics about the entire road network
+      operationId: getNetworkStats
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkStatistics'
+              examples:
+                fullStats:
+                  summary: Pennsylvania road network statistics
+                  value:
+                    totalNodes: 1088092
+                    totalEdges: 3083796
+                    avgDegree: 5.67
+                    maxDegree: 18
+                    minDegree: 1
+                    medianDegree: 4
+                    density: 0.0000052
+                    generatedAt: "2026-01-12T10:30:00Z"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /statistics/degree-distribution:
+    get:
+      tags:
+        - Statistics
+      summary: Get degree distribution
+      description: |
+        Returns the distribution of node degrees across the network.
+        Shows how many nodes have each degree value.
+      operationId: getDegreeDistribution
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  distribution:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        degree:
+                          type: integer
+                        count:
+                          type: integer
+                  statistics:
+                    type: object
+                    properties:
+                      totalDegreeValues:
+                        type: integer
+                      mostCommonDegree:
+                        type: integer
+              examples:
+                distribution:
+                  summary: Degree distribution sample
+                  value:
+                    distribution:
+                      - degree: 1
+                        count: 98234
+                      - degree: 2
+                        count: 245678
+                      - degree: 3
+                        count: 312456
+                      - degree: 4
+                        count: 289012
+                      - degree: 5
+                        count: 98765
+                      - degree: 6
+                        count: 32145
+                      - degree: 7
+                        count: 8912
+                      - degree: 8
+                        count: 2134
+                      - degree: 9
+                        count: 567
+                      - degree: 10
+                        count: 123
+                      - degree: 18
+                        count: 1
+                    statistics:
+                      totalDegreeValues: 11
+                      mostCommonDegree: 3
+
+  /classifications:
+    get:
+      tags:
+        - Classifications
+      summary: Get classification statistics
+      description: |
+        Returns the distribution of nodes across SKOS classification categories.
+        Shows how many nodes fall into each classification (Dead End, Junction, Hub, etc.)
+      operationId: getClassificationStats
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statistics:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        label:
+                          type: string
+                        count:
+                          type: integer
+                        percentage:
+                          type: number
+                          format: float
+                  total:
+                    type: integer
+              examples:
+                classificationStats:
+                  summary: Node classification distribution
+                  value:
+                    statistics:
+                      - label: "Simple Junction"
+                        count: 558234
+                        percentage: 51.3
+                      - label: "Intersection"
+                        count: 387801
+                        percentage: 35.6
+                      - label: "Dead End"
+                        count: 98234
+                        percentage: 9.0
+                      - label: "Major Hub"
+                        count: 40678
+                        percentage: 3.7
+                      - label: "Super Hub"
+                        count: 3145
+                        percentage: 0.3
+                    total: 1088092
+
+  /classifications/concepts:
+    get:
+      tags:
+        - Classifications
+      summary: Get SKOS concept hierarchy
+      description: |
+        Returns the SKOS concept scheme used for node classification,
+        including definitions, degree ranges, and hierarchical relationships.
+      operationId: getConceptHierarchy
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scheme:
+                    type: object
+                    properties:
+                      uri:
+                        type: string
+                      label:
+                        type: string
+                  concepts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SKOSConcept'
+              examples:
+                conceptHierarchy:
+                  summary: Road network concept scheme
+                  value:
+                    scheme:
+                      uri: "http://example.org/roadnet/pa#ConceptScheme"
+                      label: "Road Network Analysis Concepts"
+                    concepts:
+                      - concept: "http://example.org/roadnet/pa#DeadEnd"
+                        label: "Dead End"
+                        definition: "Node with exactly 1 connection, represents a terminal point"
+                        minDegree: 1
+                        maxDegree: 1
+                      - concept: "http://example.org/roadnet/pa#SimpleJunction"
+                        label: "Simple Junction"
+                        definition: "Node with 2-3 connections, represents basic road continuations"
+                        minDegree: 2
+                        maxDegree: 3
+                      - concept: "http://example.org/roadnet/pa#Intersection"
+                        label: "Intersection"
+                        definition: "Node with 4-5 connections, represents standard crossroads"
+                        minDegree: 4
+                        maxDegree: 5
+                      - concept: "http://example.org/roadnet/pa#MajorHub"
+                        label: "Major Hub"
+                        definition: "Node with 6-9 connections, represents complex intersections"
+                        minDegree: 6
+                        maxDegree: 9
+                      - concept: "http://example.org/roadnet/pa#SuperHub"
+                        label: "Super Hub"
+                        definition: "Node with 10+ connections, represents critical interchange points"
+                        minDegree: 10
+
+  /classifications/dead-ends:
+    get:
+      tags:
+        - Classifications
+      summary: Get all dead end nodes
+      description: |
+        Returns nodes classified as dead ends (degree = 1).
+        These represent terminal points in the road network.
+      operationId: getDeadEnds
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of results
+          required: false
+          schema:
+            type: integer
+            default: 100
+            maximum: 1000
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        nodeId:
+                          type: string
+                        connectedTo:
+                          type: string
+                  meta:
+                    type: object
+                    properties:
+                      count:
+                        type: integer
+                      classification:
+                        type: string
+              examples:
+                deadEnds:
+                  summary: Sample dead end nodes
+                  value:
+                    data:
+                      - nodeId: "12345"
+                        connectedTo: "12344"
+                      - nodeId: "67890"
+                        connectedTo: "67889"
+                      - nodeId: "99999"
+                        connectedTo: "99998"
+                    meta:
+                      count: 3
+                      classification: "Dead End"
+
+  /classifications/hubs:
+    get:
+      tags:
+        - Classifications
+      summary: Get major hub nodes
+      description: |
+        Returns nodes classified as Major Hubs or Super Hubs.
+        These are highly connected nodes representing important intersections.
+      operationId: getMajorHubs
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of results
+          required: false
+          schema:
+            type: integer
+            default: 100
+            maximum: 1000
+        - name: type
+          in: query
+          description: Filter by hub type
+          required: false
+          schema:
+            type: string
+            enum: ["Major Hub", "Super Hub", "all"]
+            default: "all"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        nodeId:
+                          type: string
+                        degree:
+                          type: integer
+                        label:
+                          type: string
+              examples:
+                topHubs:
+                  summary: Top 5 hubs by connectivity
+                  value:
+                    data:
+                      - nodeId: "0"
+                        degree: 18
+                        label: "Super Hub"
+                      - nodeId: "42156"
+                        degree: 15
+                        label: "Super Hub"
+                      - nodeId: "98234"
+                        degree: 12
+                        label: "Super Hub"
+                      - nodeId: "156789"
+                        degree: 11
+                        label: "Super Hub"
+                      - nodeId: "234567"
+                        degree: 10
+                        label: "Super Hub"
+
+  /sparql/query:
+    post:
+      tags:
+        - SPARQL
+      summary: Execute a custom SPARQL query
+      description: |
+        Execute a custom SPARQL query against the road network dataset.
+        
+        **Note**: This endpoint requires knowledge of SPARQL and the ontology structure.
+        Use with caution as complex queries may impact performance.
+      operationId: executeSparqlQuery
+      requestBody:
+        required: true
+        content:
+          application/sparql-query:
+            schema:
+              type: string
+              example: |
+                PREFIX road: <http://example.org/roadnet/pa#>
+                PREFIX roadonto: <http://example.org/roadnet/ontology#>
+                
+                SELECT ?nodeId ?degree
+                WHERE {
+                  ?node a roadonto:RoadNode ;
+                        roadonto:hasNodeId ?nodeId ;
+                        roadonto:hasDegree ?degree .
+                  FILTER(?degree > 10)
+                }
+                ORDER BY DESC(?degree)
+                LIMIT 10
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: The SPARQL query string
+                format:
+                  type: string
+                  enum: [json, xml, csv]
+                  default: json
+              required:
+                - query
+            example:
+              query: |
+                PREFIX roadonto: <http://example.org/roadnet/ontology#>
+                SELECT ?nodeId ?degree
+                WHERE {
+                  ?node roadonto:hasNodeId ?nodeId ;
+                        roadonto:hasDegree ?degree .
+                }
+                LIMIT 5
+              format: json
+      responses:
+        '200':
+          description: Successful query execution
+          content:
+            application/sparql-results+json:
+              schema:
+                $ref: '#/components/schemas/SparqlResults'
+              examples:
+                queryResults:
+                  summary: Sample SPARQL query results
+                  value:
+                    head:
+                      vars: ["nodeId", "degree"]
+                    results:
+                      bindings:
+                        - nodeId:
+                            type: "literal"
+                            value: "0"
+                          degree:
+                            type: "literal"
+                            datatype: "http://www.w3.org/2001/XMLSchema#integer"
+                            value: "18"
+                        - nodeId:
+                            type: "literal"
+                            value: "42156"
+                          degree:
+                            type: "literal"
+                            datatype: "http://www.w3.org/2001/XMLSchema#integer"
+                            value: "15"
+        '400':
+          description: Invalid SPARQL query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "INVALID_QUERY"
+                  message: "Syntax error in SPARQL query at line 3"
+                  details: "Unexpected token 'WHRE'"
+
+components:
+  schemas:
+    Node:
+      type: object
+      properties:
+        nodeId:
+          type: string
+          description: Unique identifier for the node
+          example: "0"
+        degree:
+          type: integer
+          description: Total number of connections (in + out degree)
+          example: 18
+        inDegree:
+          type: integer
+          description: Number of incoming edges
+          example: 9
+        outDegree:
+          type: integer
+          description: Number of outgoing edges
+          example: 9
+        classification:
+          type: string
+          description: SKOS classification label
+          enum:
+            - Dead End
+            - Simple Junction
+            - Intersection
+            - Major Hub
+            - Super Hub
+          example: "Super Hub"
+      required:
+        - nodeId
+        - degree
+
+    NodeDetailed:
+      allOf:
+        - $ref: '#/components/schemas/Node'
+        - type: object
+          properties:
+            classification:
+              type: object
+              properties:
+                label:
+                  type: string
+                definition:
+                  type: string
+                scheme:
+                  type: string
+                uri:
+                  type: string
+            connectedNodes:
+              type: array
+              items:
+                type: string
+              description: Array of node IDs that this node connects to
+            uri:
+              type: string
+              description: Full RDF URI of the node
+              example: "http://example.org/roadnet/pa#node_0"
+
+    Edge:
+      type: object
+      properties:
+        fromId:
+          type: string
+          description: Source node ID
+          example: "0"
+        toId:
+          type: string
+          description: Target node ID
+          example: "1"
+        fromDegree:
+          type: integer
+          description: Degree of source node
+          example: 18
+        toDegree:
+          type: integer
+          description: Degree of target node
+          example: 4
+      required:
+        - fromId
+        - toId
+
+    NetworkStatistics:
+      type: object
+      properties:
+        totalNodes:
+          type: integer
+          description: Total number of nodes in the network
+          example: 1088092
+        totalEdges:
+          type: integer
+          description: Total number of edges in the network
+          example: 3083796
+        avgDegree:
+          type: number
+          format: float
+          description: Average node degree
+          example: 5.67
+        maxDegree:
+          type: integer
+          description: Maximum node degree
+          example: 18
+        minDegree:
+          type: integer
+          description: Minimum node degree
+          example: 1
+        medianDegree:
+          type: number
+          format: float
+          description: Median node degree
+          example: 4.0
+        density:
+          type: number
+          format: float
+          description: Network density (actual edges / possible edges)
+          example: 0.0000052
+        generatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when statistics were generated
+      required:
+        - totalNodes
+        - totalEdges
+        - avgDegree
+
+    SKOSConcept:
+      type: object
+      properties:
+        concept:
+          type: string
+          description: URI of the SKOS concept
+          example: "http://example.org/roadnet/pa#SuperHub"
+        label:
+          type: string
+          description: Human-readable label
+          example: "Super Hub"
+        definition:
+          type: string
+          description: Definition of the concept
+          example: "Node with 10 or more connections"
+        broader:
+          type: string
+          description: URI of broader concept (if any)
+        minDegree:
+          type: integer
+          description: Minimum degree for this classification
+          example: 10
+        maxDegree:
+          type: integer
+          description: Maximum degree for this classification (null = no upper limit)
+          nullable: true
+          example: null
+      required:
+        - concept
+        - label
+        - definition
+
+    Pagination:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: Number of items per page
+          example: 100
+        offset:
+          type: integer
+          description: Number of items skipped
+          example: 0
+        hasMore:
+          type: boolean
+          description: Whether more results are available
+          example: true
+      required:
+        - limit
+        - offset
+        - hasMore
+
+    SparqlResults:
+      type: object
+      properties:
+        head:
+          type: object
+          properties:
+            vars:
+              type: array
+              items:
+                type: string
+        results:
+          type: object
+          properties:
+            bindings:
+              type: array
+              items:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [uri, literal, bnode]
+                    value:
+                      type: string
+                    datatype:
+                      type: string
+                    xml:lang:
+                      type: string
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code
+              example: "INVALID_PARAMETER"
+            message:
+              type: string
+              description: Human-readable error message
+              example: "The 'minDegree' parameter must be less than 'maxDegree'"
+            details:
+              type: string
+              description: Additional error details
+            timestamp:
+              type: string
+              format: date-time
+      required:
+        - error
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "INVALID_PARAMETER"
+              message: "The 'minDegree' parameter must be a positive integer"
+              timestamp: "2026-01-12T10:30:00Z"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "NOT_FOUND"
+              message: "Node with ID '999999999' does not exist"
+              timestamp: "2026-01-12T10:30:00Z"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "INTERNAL_ERROR"
+              message: "An unexpected error occurred while processing the request"
+              details: "Connection to SPARQL endpoint failed"
+              timestamp: "2026-01-12T10:30:00Z"
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication (future implementation)
+
+# Security is currently not enforced but defined for future use
+# security:
+#   - ApiKeyAuth: []
