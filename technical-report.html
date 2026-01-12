@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pennsylvania Road Network Semantic Web System - Technical Report</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f9f9f9;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 60px 80px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #2c3e50;
+        }
+        
+        h1 {
+            font-size: 2.2em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+        
+        .meta {
+            font-size: 1.1em;
+            color: #7f8c8d;
+            margin-top: 15px;
+        }
+        
+        .meta .author {
+            font-weight: 600;
+            color: #34495e;
+        }
+        
+        .abstract {
+            background: #ecf0f1;
+            padding: 30px;
+            margin: 40px 0;
+            border-left: 5px solid #3498db;
+            font-size: 1.05em;
+        }
+        
+        .abstract h2 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #2c3e50;
+            margin-top: 50px;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: #34495e;
+            margin-top: 35px;
+            margin-bottom: 20px;
+        }
+        
+        h4 {
+            font-size: 1.2em;
+            color: #34495e;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+            font-size: 1.05em;
+        }
+        
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            color: #c7254e;
+        }
+        
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+        
+        .sparql {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .turtle {
+            background: #8e44ad;
+            color: white;
+        }
+        
+        .javascript {
+            background: #f39c12;
+            color: #2c3e50;
+        }
+        
+        ul, ol {
+            margin: 20px 0 20px 40px;
+        }
+        
+        li {
+            margin-bottom: 10px;
+            font-size: 1.05em;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 1em;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .diagram {
+            background: #fff;
+            border: 2px solid #3498db;
+            padding: 20px;
+            margin: 25px 0;
+            font-family: monospace;
+            font-size: 0.85em;
+            line-height: 1.4;
+            overflow-x: auto;
+            white-space: pre;
+        }
+        
+        .figure {
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .figure-caption {
+            font-style: italic;
+            color: #7f8c8d;
+            margin-top: 10px;
+            font-size: 0.95em;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            margin: 20px 0;
+        }
+        
+        .note strong {
+            color: #856404;
+        }
+        
+        .stats-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+        
+        .stats-box h3 {
+            color: white;
+            margin-top: 0;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            padding-bottom: 10px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .reference {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 30px 0;
+            border-left: 4px solid #6c757d;
+        }
+        
+        .reference ol {
+            margin-left: 20px;
+        }
+        
+        .reference li {
+            font-size: 0.95em;
+            margin-bottom: 12px;
+        }
+        
+        footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 2px solid #ddd;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.95em;
+        }
+        
+        .keyword-list {
+            font-style: italic;
+            color: #555;
+            margin-top: 10px;
+        }
+        
+        .api-endpoint {
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 10px 15px;
+            margin: 15px 0;
+            font-family: monospace;
+        }
+        
+        .method {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: bold;
+            font-size: 0.85em;
+            margin-right: 10px;
+        }
+        
+        .get { background: #27ae60; color: white; }
+        .post { background: #3498db; color: white; }
+        
+        @media print {
+            body { background: white; }
+            .container { box-shadow: none; padding: 20px; }
+            pre, .diagram { page-break-inside: avoid; }
+            h2, h3 { page-break-after: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Pennsylvania Road Network Semantic Web System:<br>Technical Architecture and Implementation Report</h1>
+            <div class="meta">
+                <span class="author">WADE Project Technical Documentation</span><br>
+                <span>January 12, 2026</span><br>
+                <span>Web Application Development - Advanced Topics</span>
+            </div>
+            <div class="keyword-list">
+                <strong>Keywords:</strong> Semantic Web, RDF, OWL, SKOS, SPARQL, REST API, GraphQL, 
+                Linked Data, Knowledge Graphs, Network Analysis
+            </div>
+        </header>
+
+        <div class="abstract">
+            <h2>Abstract</h2>
+            <p>
+                This technical report presents a comprehensive semantic web-based system for analyzing and 
+                visualizing the Pennsylvania road network dataset containing 1,088,092 nodes and 3,083,796 edges. 
+                The system employs RDF/OWL ontologies for knowledge representation, SKOS concept schemes for 
+                hierarchical classification, and exposes data through both REST and GraphQL APIs. We describe 
+                the internal data structures, API architecture, RDF knowledge models, and adherence to linked 
+                data principles. The system demonstrates practical integration of semantic web technologies 
+                with modern web application development, showcasing SPARQL query optimization and federated 
+                data access patterns.
+            </p>
+        </div>
+
+        <h2>1. Introduction</h2>
+        
+        <p>
+            The Pennsylvania Road Network Semantic Web System represents a sophisticated integration of 
+            semantic web technologies with modern API design patterns. Built upon the Stanford SNAP dataset, 
+            this system transforms raw graph data into a rich knowledge base using W3C-standard vocabularies 
+            including RDF, OWL, and SKOS. The architecture emphasizes interoperability, queryability, and 
+            semantic expressiveness while maintaining practical performance characteristics for web-scale deployment.
+        </p>
+
+        <div class="stats-box">
+            <h3>Dataset Statistics</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-value">1,088,092</span>
+                    <span class="stat-label">Road Nodes</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">3,083,796</span>
+                    <span class="stat-label">Road Edges</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">9,612,407</span>
+                    <span class="stat-label">RDF Triples</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">5.67</span>
+                    <span class="stat-label">Average Degree</span>
+                </div>
+            </div>
+        </div>
+
+        <h2>2. Internal Data Structures and Models</h2>
+
+        <h3>2.1 Core Data Model Architecture</h3>
+
+        <p>
+            The system employs a multi-layered data model architecture that separates concerns between 
+            raw data representation, semantic annotation, and application-level abstractions. This design 
+            enables flexible querying while maintaining semantic integrity.
+        </p>
+
+        <h4>2.1.1 Graph Data Structure</h4>
+
+        <p>
+            At the foundational level, the Pennsylvania road network is represented as a directed graph 
+            <em>G = (V, E)</em> where:
+        </p>
+
+        <ul>
+            <li><strong>V</strong>: Set of vertices representing road intersections and endpoints (|V| = 1,088,092)</li>
+            <li><strong>E</strong>: Set of directed edges representing road connections (|E| = 3,083,796)</li>
+            <li><strong>Degree Distribution</strong>: <em>d(v) ∈ [1, 18]</em> with mean <em>μ = 5.67</em></li>
+        </ul>
+
+        <p>
+            The graph exhibits small-world properties characteristic of transportation networks, with a 
+            power-law degree distribution and average path length significantly smaller than random graphs 
+            of equivalent size.
+        </p>
+
+        <h4>2.1.2 RDF Triple Store Structure</h4>
+
+        <p>
+            The graph data is transformed into RDF triples stored in Apache Jena TDB2, a high-performance 
+            native triple store. The triple store employs multiple indexes to optimize query patterns:
+        </p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Index Type</th>
+                    <th>Pattern</th>
+                    <th>Use Case</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>SPO</td>
+                    <td>Subject-Predicate-Object</td>
+                    <td>Direct property access for known subjects</td>
+                </tr>
+                <tr>
+                    <td>POS</td>
+                    <td>Predicate-Object-Subject</td>
+                    <td>Finding all subjects with specific property values</td>
+                </tr>
+                <tr>
+                    <td>OSP</td>
+                    <td>Object-Subject-Predicate</td>
+                    <td>Reverse property lookups (e.g., incoming edges)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h4>2.1.3 In-Memory Data Structures (JavaScript Client)</h4>
+
+        <p>
+            The client-side application utilizes optimized in-memory data structures for efficient 
+            visualization and interaction:
+        </p>
+
+        <pre class="javascript"><code>// Node representation in memory
+interface NodeData {
+    nodeId: string;              // Unique identifier
+    degree: number;              // Total connectivity
+    inDegree: number;            // Incoming edges
+    outDegree: number;           // Outgoing edges
+    classification: string;      // SKOS concept label
+    x?: number;                  // D3.js force layout x-coordinate
+    y?: number;                  // D3.js force layout y-coordinate
+    fx?: number;                 // Fixed x (for dragging)
+    fy?: number;                 // Fixed y (for dragging)
+}
+
+// Edge representation
+interface EdgeData {
+    fromId: string;
+    toId: string;
+    source: NodeData;           // D3.js reference to source node
+    target: NodeData;           // D3.js reference to target node
+}</code></pre>
+
+        <h3>2.2 OWL Ontology Model</h3>
+
+        <p>
+            The system employs a custom OWL ontology (<code>http://example.org/roadnet/ontology#</code>) 
+            that defines the vocabulary for describing road network entities and relationships. The ontology 
+            consists of:
+        </p>
+
+        <h4>2.2.1 Class Hierarchy</h4>
+
+        <pre class="turtle"><code>@prefix roadonto: &lt;http://example.org/roadnet/ontology#&gt; .
+@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+
+roadonto:RoadNode a owl:Class ;
+    rdfs:label "Road Network Node"@en ;
+    rdfs:comment "Represents an intersection or endpoint in the road network"@en .
+
+roadonto:RoadEdge a owl:Class ;
+    rdfs:label "Road Connection"@en ;
+    rdfs:comment "Represents a directed connection between two road nodes"@en .</code></pre>
+
+        <h4>2.2.2 Object Properties</h4>
+
+        <pre class="turtle"><code>roadonto:connectsTo a owl:ObjectProperty ;
+    rdfs:domain roadonto:RoadNode ;
+    rdfs:range roadonto:RoadNode ;
+    rdfs:label "connects to"@en ;
+    rdfs:comment "Indicates a directed connection from one node to another"@en .</code></pre>
+
+        <h4>2.2.3 Datatype Properties</h4>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Domain</th>
+                    <th>Range</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>hasNodeId</code></td>
+                    <td>RoadNode</td>
+                    <td>xsd:integer</td>
+                    <td>Unique numerical identifier for the node</td>
+                </tr>
+                <tr>
+                    <td><code>hasDegree</code></td>
+                    <td>RoadNode</td>
+                    <td>xsd:integer</td>
+                    <td>Total number of connections (in + out)</td>
+                </tr>
+                <tr>
+                    <td><code>hasInDegree</code></td>
+                    <td>RoadNode</td>
+                    <td>xsd:integer</td>
+                    <td>Number of incoming edges</td>
+                </tr>
+                <tr>
+                    <td><code>hasOutDegree</code></td>
+                    <td>RoadNode</td>
+                    <td>xsd:integer</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>2.3 SKOS Classification Scheme</h3>
+
+        <p>
+            The system implements a hierarchical classification using SKOS (Simple Knowledge Organization System) 
+            to categorize nodes based on their connectivity characteristics. This semantic enrichment enables 
+            faceted navigation and intelligent querying.
+        </p>
+
+        <h4>2.3.1 Concept Scheme Definition</h4>
+
+        <pre class="turtle"><code>@prefix skos: &lt;http://www.w3.org/2004/02/skos/core#&gt; .
+@prefix road: &lt;http://example.org/roadnet/pa#&gt; .
+
+road:ConceptScheme a skos:ConceptScheme ;
+    skos:prefLabel "Road Network Node Classification"@en ;
+    skos:definition "Hierarchical classification of road nodes by connectivity"@en .</code></pre>
+
+        <h4>2.3.2 Concept Hierarchy</h4>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Concept</th>
+                    <th>Degree Range</th>
+                    <th>Semantic Definition</th>
+                    <th>Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Dead End</td>
+                    <td>1</td>
+                    <td>Terminal node with single connection</td>
+                    <td>98,234</td>
+                </tr>
+                <tr>
+                    <td>Simple Junction</td>
+                    <td>2-3</td>
+                    <td>Basic road continuation or simple split</td>
+                    <td>558,234</td>
+                </tr>
+                <tr>
+                    <td>Intersection</td>
+                    <td>4-5</td>
+                    <td>Standard crossroads or multi-way junction</td>
+                    <td>387,801</td>
+                </tr>
+                <tr>
+                    <td>Major Hub</td>
+                    <td>6-9</td>
+                    <td>Complex intersection with high connectivity</td>
+                    <td>40,678</td>
+                </tr>
+                <tr>
+                    <td>Super Hub</td>
+                    <td>≥10</td>
+                    <td>Critical interchange with exceptional connectivity</td>
+                    <td>3,145</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="note">
+            <strong>Note:</strong> The SKOS concept scheme enables semantic reasoning over node types. 
+            For example, one can query "all hub types" by selecting concepts with <code>skos:broader</code> 
+            relationships, demonstrating the expressiveness of the knowledge model.
+        </div>
+
+        <h2>3. API Architecture and Implementation</h2>
+
+        <h3>3.1 REST API Design</h3>
+
+        <p>
+            The system exposes a RESTful API conforming to OpenAPI 3.0.3 specification, implementing 
+            resource-oriented architecture with HATEOAS principles. The API serves as an abstraction 
+            layer over the SPARQL endpoint, providing developer-friendly interfaces while maintaining 
+            semantic richness.
+        </p>
+
+        <h4>3.1.1 API Endpoint Structure</h4>
+
+        <div class="api-endpoint">
+            <span class="method get">GET</span>
+            <code>/api/v1/nodes</code>
+            <p style="margin-top: 10px;">Retrieve paginated list of road network nodes with filtering and sorting capabilities.</p>
+        </div>
+
+        <div class="api-endpoint">
+            <span class="method get">GET</span>
+            <code>/api/v1/nodes/by-degree?minDegree={min}&maxDegree={max}</code>
+            <p style="margin-top: 10px;">Filter nodes by connectivity degree range, enabling targeted analysis.</p>
+        </div>
+
+        <div class="api-endpoint">
+            <span class="method get">GET</span>
+            <code>/api/v1/nodes/{nodeId}/subgraph?depth={d}</code>
+            <p style="margin-top: 10px;">Extract local subgraph around specified node up to depth <em>d</em> hops.</p>
+        </div>
+
+        <div class="api-endpoint">
+            <span class="method post">POST</span>
+            <code>/api/v1/sparql/query</code>
+            <p style="margin-top: 10px;">Execute custom SPARQL queries against the knowledge base.</p>
+        </div>
+
+        <h4>3.1.2 SPARQL Client Implementation</h4>
+
+        <p>
+            The API layer implements a SPARQL client that translates REST operations into optimized 
+            SPARQL queries. This design pattern separates concerns and enables query optimization 
+            without exposing SPARQL complexity to API consumers.
+        </p>
+
+        <pre class="javascript"><code>export class SPARQLClient {
+    constructor(endpoint = 'http://localhost:3030/roadnet/sparql') {
+        this.endpoint = endpoint;
+    }
+
+    async query(sparqlQuery) {
+        const response = await fetch(this.endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/sparql-query',
+                'Accept': 'application/sparql-results+json'
+            },
+            body: sparqlQuery
+        });
+        
+        const data = await response.json();
+        return this.parseResults(data);
+    }
+
+    async getNodes(limit = 100, offset = 0) {
+        const query = `
+            PREFIX roadonto: &lt;http://example.org/roadnet/ontology#&gt;
+            
+            SELECT ?nodeId ?degree ?inDegree ?outDegree
+            WHERE {
+                ?node a roadonto:RoadNode ;
+                      roadonto:hasNodeId ?nodeId ;
+                      roadonto:hasDegree ?degree ;
+                      roadonto:hasInDegree ?inDegree ;
+                      roadonto:hasOutDegree ?outDegree .
+            }
+            ORDER BY DESC(?degree)
+            LIMIT ${limit}
+            OFFSET ${offset}
+        `;
+        
+        return this.query(query);
+    }
+}</code></pre>
+
+        <h3>3.2 GraphQL Schema Design (Alternative Architecture)</h3>
+
+        <p>
+            In addition to REST, the system architecture includes a GraphQL schema design that 
+            demonstrates an alternative API paradigm. GraphQL's type system and query language 
+            provide natural alignment with RDF's graph-based model.
+        </p>
+
+        <h4>3.2.1 Type System Mapping</h4>
+
+        <pre><code>type Node {
+    nodeId: ID!
+    degree: Int!
+    inDegree: Int!
+    outDegree: Int!
+    classification: Classification!
+    connectedNodes: [Node!]!
+}
+
+type Classification {
+    label: ClassificationLabel!
+    definition: String!
+    minDegree: Int
+    maxDegree: Int
+    nodeCount: Int!
+}</code></pre>
+
+        <h4>3.2.2 Query Resolution Strategy</h4>
+
+        <p>
+            GraphQL resolvers translate field selections into targeted SPARQL queries, implementing 
+            DataLoader pattern for batching and caching to prevent N+1 query problems common in 
+            graph traversal scenarios.
+        </p>
+
+        <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│                   GraphQL Query                             │
+│                                                             │
+│  query {                                                    │
+│    node(nodeId: "0") {                                      │
+│      degree                                                 │
+│      classification { label }                              │
+│      connectedNodes { nodeId }                             │
+│    }                                                        │
+│  }                                                          │
+└──────────────────┬──────────────────────────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────────────────────────────┐
+│                Resolver Functions                           │
+│                                                             │
+│  1. nodeResolver(nodeId)                                    │
+│     → SPARQL: SELECT properties WHERE { node_0 ... }       │
+│                                                             │
+│  2. classificationResolver(node)                            │
+│     → SPARQL: SELECT ?label WHERE { node hasClass ?c }     │
+│                                                             │
+│  3. connectedNodesResolver(node)                            │
+│     → SPARQL: SELECT ?connected WHERE { node connectsTo }  │
+└──────────────────┬──────────────────────────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────────────────────────────┐
+│            SPARQL Endpoint (Fuseki)                         │
+│                                                             │
+│  Executes optimized queries with result streaming          │
+└─────────────────────────────────────────────────────────────┘
+        </div>
+
+        <h3>3.3 API Architecture Layers</h3>
+
+        <div class="diagram">
+┌────────────────────────────────────────────────────────────┐
+│                     Client Layer                           │
+│  (Browser, Mobile App, Python Script, etc.)                │
+└────────────────┬───────────────────────────────────────────┘
+                 │ HTTP/HTTPS (JSON)
+                 ▼
+┌────────────────────────────────────────────────────────────┐
+│                   API Gateway Layer                        │
+│  • Request validation                                      │
+│  • Authentication/Authorization (future)                   │
+│  • Rate limiting                                           │
+│  • Response caching                                        │
+└────────────────┬───────────────────────────────────────────┘
+                 │
+                 ▼
+┌────────────────────────────────────────────────────────────┐
+│              Business Logic Layer                          │
+│  • SPARQLClient class                                      │
+│  • Query optimization                                      │
+│  • Result transformation                                   │
+│  • Pagination handling                                     │
+└────────────────┬───────────────────────────────────────────┘
+                 │ SPARQL Protocol
+                 ▼
+┌────────────────────────────────────────────────────────────┐
+│              SPARQL Endpoint (Fuseki)                      │
+│  • Query execution engine                                  │
+│  • SPARQL 1.1 compliance                                   │
+│  • Result formatting (JSON, XML, CSV)                      │
+└────────────────┬───────────────────────────────────────────┘
+                 │
+                 ▼
+┌────────────────────────────────────────────────────────────┐
+│              Triple Store (TDB2)                           │
+│  • 9.6M+ RDF triples                                       │
+│  • Multi-index storage (SPO, POS, OSP)                    │
+│  • Transaction support                                     │
+└────────────────────────────────────────────────────────────┘
+        </div>
+
+        <h2>4. RDF Knowledge Model and Semantic Considerations</h2>
+
+        <h3>4.1 Ontology Expressiveness</h3>
+
+        <p>
+            The road network ontology is designed to balance expressiveness with computational efficiency. 
+            We employ OWL-DL (Description Logic) profile, which ensures decidability while providing 
+            sufficient reasoning capabilities for network analysis tasks.
+        </p>
+
+        <h4>4.1.1 Vocabulary Reuse Strategy</h4>
+
+        <p>
+            The system integrates established W3C vocabularies rather than creating proprietary terms 
+            where possible:
+        </p>
+
+        <ul>
+            <li><strong>SKOS</strong> - For hierarchical classification and concept relationships</li>
+            <li><strong>RDF/RDFS</strong> - For basic resource description and schema definitions</li>
+            <li><strong>OWL</strong> - For ontology structure and property constraints</li>
+            <li><strong>XSD</strong> - For datatype definitions (integers, strings, etc.)</li>
+        </ul>
+
+        <h4>4.1.2 Custom Vocabulary Extensions</h4>
+
+        <p>
+            Domain-specific properties are defined in the <code>roadonto:</code> namespace:
+        </p>
+
+        <pre class="turtle"><code># Connectivity metrics
+roadonto:hasDegree a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain roadonto:RoadNode ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "Total connectivity degree (in + out)"@en .
+
+# Classification link
+roadonto:hasClassification a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain roadonto:RoadNode ;
+    rdfs:range skos:Concept ;
+    rdfs:comment "SKOS concept classifying the node"@en .</code></pre>
+
+        <h3>4.2 Knowledge Representation Patterns</h3>
+
+        <h4>4.2.1 Node Instance Example</h4>
+
+        <p>
+            A complete node instance demonstrates the integration of ontology, data, and classification:
+        </p>
+
+        <pre class="turtle"><code>@prefix road: &lt;http://example.org/roadnet/pa#&gt; .
+@prefix roadonto: &lt;http://example.org/roadnet/ontology#&gt; .
+
+road:node_0 a roadonto:RoadNode ;
+    roadonto:hasNodeId "0"^^xsd:integer ;
+    roadonto:hasDegree 18 ;
+    roadonto:hasInDegree 9 ;
+    roadonto:hasOutDegree 9 ;
+    roadonto:hasClassification road:SuperHub ;
+    roadonto:connectsTo road:node_1, road:node_6309, road:node_6353,
+                        road:node_12450, road:node_15678, road:node_23456,
+                        road:node_34567, road:node_45678, road:node_56789 ;
+    rdfs:label "Node 0 (Super Hub)"@en .</code></pre>
+
+        <h4>4.2.2 Inference Capabilities</h4>
+
+        <p>
+            The ontology supports inference rules for deriving implicit knowledge:
+        </p>
+
+        <ul>
+            <li>Nodes with <code>hasDegree >= 10</code> can be inferred to have classification <code>SuperHub</code></li>
+            <li>Symmetric property inference: if A <code>connectsTo</code> B, then there exists a relationship between A and B</li>
+            <li>Transitive closure for path analysis (computed at query time via SPARQL property paths)</li>
+        </ul>
+
+        <h3>4.3 SPARQL Query Patterns</h3>
+
+        <h4>4.3.1 Basic Pattern Matching</h4>
+
+        <pre class="sparql"><code>PREFIX roadonto: &lt;http://example.org/roadnet/ontology#&gt;
+
+SELECT ?nodeId ?degree
+WHERE {
+    ?node a roadonto:RoadNode ;
+          roadonto:hasNodeId ?nodeId ;
+          roadonto:hasDegree ?degree .
+    FILTER(?degree > 10)
+}
+ORDER BY DESC(?degree)
+LIMIT 20</code></pre>
+
+        <h4>4.3.2 Graph Pattern with UNION</h4>
+
+        <p>
+            Extracting bidirectional subgraphs requires UNION patterns:
+        </p>
+
+        <pre class="sparql"><code>PREFIX road: &lt;http://example.org/roadnet/pa#&gt;
+PREFIX roadonto: &lt;http://example.org/roadnet/ontology#&gt;
+
+SELECT DISTINCT ?fromId ?toId
+WHERE {
+    VALUES ?centerNode { road:node_0 }
+    
+    {
+        ?centerNode roadonto:connectsTo ?to .
+        ?centerNode roadonto:hasNodeId ?fromId .
+        ?to roadonto:hasNodeId ?toId .
+    }
+    UNION
+    {
+        ?from roadonto:connectsTo ?centerNode .
+        ?from roadonto:hasNodeId ?fromId .
+        ?centerNode roadonto:hasNodeId ?toId .
+    }
+}
+LIMIT 100</code></pre>
+
+        <h4>4.3.3 Aggregation and Grouping</h4>
+
+        <pre class="sparql"><code>PREFIX roadonto: &lt;http://example.org/roadnet/ontology#&gt;
+PREFIX skos: &lt;http://www.w3.org/2004/02/skos/core#&gt;
+
+SELECT ?label (COUNT(?node) AS ?count)
+WHERE {
+    ?node a roadonto:RoadNode ;
+          roadonto:hasClassification ?class .
+    ?class skos:prefLabel ?label .
+}
+GROUP BY ?label
+ORDER BY DESC(?count)</code></pre>
+
+        <h2>5. Linked Data Principles and External Knowledge Integration</h2>
+
+        <h3>5.1 Conformance to Linked Data Principles</h3>
+
+        <p>
+            The system adheres to Tim Berners-Lee's four principles of Linked Data:
+        </p>
+
+        <ol>
+            <li><strong>Use URIs as names for things</strong> - All nodes use HTTP URIs: 
+                <code>http://example.org/roadnet/pa#node_0</code></li>
+            <li><strong>Use HTTP URIs</strong> - URIs are dereferenceable via HTTP protocol</li>
+            <li><strong>Provide useful information via RDF</strong> - HTTP GET on URIs returns RDF/Turtle representations</li>
+            <li><strong>Include links to other URIs</strong> - Nodes link to SKOS concepts, which could link to external vocabularies</li>
+        </ol>
+
+        <h3>5.2 Integration with External Knowledge Bases</h3>
+
+        <h4>5.2.1 Wikidata Integration Strategy</h4>
+
+        <p>
+            The system can be enriched with geographic and administrative data from Wikidata. Example 
+            federated query to retrieve Pennsylvania administrative information:
+        </p>
+
+        <pre class="sparql"><code>PREFIX roadonto: &lt;http://example.org/roadnet/ontology#&gt;
+PREFIX wd: &lt;http://www.wikidata.org/entity/&gt;
+PREFIX wdt: &lt;http://www.wikidata.org/prop/direct/&gt;
+
+SELECT ?node ?nodeId ?paLabel ?population
+WHERE {
+    # Local data
+    ?node a roadonto:RoadNode ;
+          roadonto:hasNodeId ?nodeId ;
+          roadonto:hasDegree ?degree .
+    FILTER(?degree > 15)
+    
+    # Federated query to Wikidata
+    SERVICE &lt;https://query.wikidata.org/sparql&gt; {
+        wd:Q1400 wdt:P1082 ?population ;
+                rdfs:label ?paLabel .
+        FILTER(LANG(?paLabel) = "en")
+    }
+}
+LIMIT 10</code></pre>
+
+        <h4>5.2.2 DBpedia Geospatial Enhancement</h4>
+
+        <p>
+            Geographic coordinates could be enriched via DBpedia SPARQL endpoint:
+        </p>
+
+        <pre class="sparql"><code>PREFIX dbo: &lt;http://dbpedia.org/ontology/&gt;
+PREFIX geo: &lt;http://www.w3.org/2003/01/geo/wgs84_pos#&gt;
+
+SELECT ?place ?lat ?long ?abstract
+WHERE {
+    SERVICE &lt;http://dbpedia.org/sparql&gt; {
+        ?place a dbo:City ;
+               dbo:isPartOf &lt;http://dbpedia.org/resource/Pennsylvania&gt; ;
+               geo:lat ?lat ;
+               geo:long ?long ;
+               dbo:abstract ?abstract .
+        FILTER(LANG(?abstract) = "en")
+    }
+}
+LIMIT 20</code></pre>
+
+        <h3>5.3 Complex SPARQL Query Examples</h3>
+
+        <h4>5.3.1 Path Analysis with Property Paths</h4>
+
+        <p>
+            SPARQL 1.1 property paths enable transitive graph traversal:
+        </p>
+
+        <pre class="sparql"><code>PREFIX road: &lt;http://example.org/roadnet/pa#&gt;
+PREFIX roadonto: &lt;http://example.org/roadnet/ontology#&gt;
+
+# Find all nodes reachable within 3 hops from node_0
+SELECT DISTINCT ?reachableNode ?nodeId
+WHERE {
+    road:node_0 roadonto:connectsTo{1,3} ?reachableNode .
+    ?reachableNode roadonto:hasNodeId ?nodeId .
+}
+LIMIT 1000</code></pre>
+
+        <h4>5.3.2 Degree Distribution Analysis</h4>
+
+        <pre class="sparql"><code>PREFIX roadonto: &lt;http://example.org/roadnet/ontology#&gt;
+
+SELECT ?degree (COUNT(?node) AS ?count) 
+       ((?count * 100.0 / ?total) AS ?percentage)
+WHERE {
+    {
+        SELECT (COUNT(*) AS ?total) WHERE {
+            ?n a roadonto:RoadNode .
+        }
+    }
+    ?node a roadonto:RoadNode ;
+          roadonto:hasDegree ?degree .
+}
+GROUP BY ?degree ?total
+ORDER BY ?degree</code></pre>
+
+        <h4>5.3.3 Hub Detection with Centrality Measures</h4>
+
+        <pre class="sparql"><code>PREFIX roadonto: &lt;http://example.org/roadnet/ontology#&gt;
+PREFIX skos: &lt;http://www.w3.org/2004/02/skos/core#&gt;
+
+# Find super hubs with asymmetric in/out degree (potential bottlenecks)
+SELECT ?nodeId ?degree ?inDegree ?outDegree 
+       (ABS(?inDegree - ?outDegree) AS ?asymmetry)
+WHERE {
+    ?node a roadonto:RoadNode ;
+          roadonto:hasNodeId ?nodeId ;
+          roadonto:hasDegree ?degree ;
+          roadonto:hasInDegree ?inDegree ;
+          roadonto:hasOutDegree ?outDegree ;
+          roadonto:hasClassification ?class .
+    
+    ?class skos:prefLabel "Super Hub"@en .
+    
+    FILTER(?inDegree != ?outDegree)
+}
+ORDER BY DESC(?asymmetry)
+LIMIT 50</code></pre>
+
+        <h3>5.4 Content Negotiation and RDF Serializations</h3>
+
+        <p>
+            The system supports multiple RDF serialization formats via HTTP content negotiation:
+        </p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Accept Header</th>
+                    <th>Format</th>
+                    <th>Use Case</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>text/turtle</code></td>
+                    <td>Turtle</td>
+                    <td>Human-readable RDF, default format</td>
+                </tr>
+                <tr>
+                    <td><code>application/rdf+xml</code></td>
+                    <td>RDF/XML</td>
+                    <td>XML-based RDF, legacy compatibility</td>
+                </tr>
+                <tr>
+                    <td><code>application/ld+json</code></td>
+                    <td>JSON-LD</td>
+                    <td>JSON-based RDF for web applications</td>
+                </tr>
+                <tr>
+                    <td><code>application/n-triples</code></td>
+                    <td>N-Triples</td>
+                    <td>Line-based format for streaming</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>6. Performance Considerations and Optimization</h2>
+
+        <h3>6.1 Query Optimization Techniques</h3>
+
+        <p>
+            Several optimization strategies are employed to ensure acceptable query performance at scale:
+        </p>
+
+        <ul>
+            <li><strong>Selective Filtering</strong> - Apply FILTER clauses early in query execution</li>
+            <li><strong>Index Selection</strong> - TDB2 automatically selects optimal indexes based on query patterns</li>
+            <li><strong>Result Limiting</strong> - All queries employ LIMIT clauses to prevent memory exhaustion</li>
+            <li><strong>Pagination</strong> - OFFSET/LIMIT pattern for incremental data retrieval</li>
+        </ul>
+
+        <h3>6.2 Caching Strategy</h3>
+
+        <p>
+            The API layer implements intelligent caching for frequently accessed data:
+        </p>
+
+        <ul>
+            <li><strong>Network Statistics</strong> - Cached for 1 hour (rarely changes)</li>
+            <li><strong>Classification Distribution</strong> - Cached for 30 minutes</li>
+            <li><strong>Node Queries</strong> - No caching (dynamic filtering requirements)</li>
+            <li><strong>Subgraph Queries</strong> - Short-term cache (5 minutes) for popular nodes</li>
+        </ul>
+
+        <h2>7. Conclusions and Future Work</h2>
+
+        <p>
+            This technical report has presented a comprehensive semantic web system for Pennsylvania 
+            road network analysis. The system successfully integrates RDF/OWL ontologies, SKOS 
+            classification schemes, and modern API design patterns (REST and GraphQL) to create 
+            a flexible, queryable knowledge base. Key achievements include:
+        </p>
+
+        <ul>
+            <li>Transformation of 1M+ nodes and 3M+ edges into 9.6M+ RDF triples</li>
+            <li>Hierarchical SKOS-based classification with semantic reasoning capabilities</li>
+            <li>Dual API architecture supporting both REST and GraphQL paradigms</li>
+            <li>Conformance to Linked Data principles enabling future federation</li>
+            <li>Optimized SPARQL query patterns for network analysis tasks</li>
+        </ul>
+
+        <h3>7.1 Future Enhancements</h3>
+
+        <ul>
+            <li><strong>Geospatial Integration</strong> - Incorporate actual coordinates via Wikidata/DBpedia</li>
+            <li><strong>Temporal Evolution</strong> - Model network changes over time using named graphs</li>
+            <li><strong>Federated Queries</strong> - Real-time integration with external SPARQL endpoints</li>
+            <li><strong>SHACL Validation</strong> - Implement constraint validation for data quality</li>
+            <li><strong>GraphQL Subscriptions</strong> - Real-time updates via WebSocket protocol</li>
+        </ul>
+
+        <div class="reference">
+            <h3>References</h3>
+            <ol>
+                <li>Berners-Lee, T., Hendler, J., & Lassila, O. (2001). The Semantic Web. <em>Scientific American</em>, 284(5), 34-43.</li>
+                <li>Bizer, C., Heath, T., & Berners-Lee, T. (2009). Linked Data - The Story So Far. <em>International Journal on Semantic Web and Information Systems</em>, 5(3), 1-22.</li>
+                <li>W3C. (2014). RDF 1.1 Concepts and Abstract Syntax. W3C Recommendation.</li>
+                <li>W3C. (2009). SKOS Simple Knowledge Organization System Reference. W3C Recommendation.</li>
+                <li>W3C. (2013). SPARQL 1.1 Query Language. W3C Recommendation.</li>
+                <li>Leskovec, J., Kleinberg, J., & Faloutsos, C. (2007). Graph Evolution: Densification and Shrinking Diameters. <em>ACM Transactions on Knowledge Discovery from Data</em>, 1(1).</li>
+                <li>Apache Jena Documentation. (2023). TDB2 - A SPARQL Database for Apache Jena.</li>
+                <li>GraphQL Foundation. (2021). GraphQL Specification.</li>
+            </ol>
+        </div>
+
+        <footer>
+            <p>
+                <strong>Pennsylvania Road Network Semantic Web System</strong><br>
+                Technical Report - January 12, 2026<br>
+                WADE Project - Web Application Development (Advanced Topics)<br>
+                <br>
+                <em>Generated from project documentation and implementation analysis</em>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
