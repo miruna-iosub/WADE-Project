@@ -22,6 +22,8 @@ An interactive web-based visualization tool for analyzing the Pennsylvania road 
 
 ---
 
+## Demo Video : https://youtu.be/dMxf7h9oj-U
+
 ## 🎯 Overview
 
 This project transforms the Stanford SNAP Pennsylvania road network dataset into a semantic web knowledge base using RDF/OWL ontologies and SKOS concept schemes. It provides an interactive visualization interface that allows users to explore network topology, node classifications, and connectivity patterns through SPARQL queries.
